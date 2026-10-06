@@ -1,62 +1,93 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSignup(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
 
-    setLoading(false);
+      const data = await response.json();
 
-    if (result?.error) {
-      setError("Invalid email or password");
-      return;
+      if (!response.ok || !data.success) {
+        setError(data.message || "Registration failed");
+        return;
+      }
+
+      router.push("/login");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+
+        {/* Logo / Header */}
         <div className="text-center mb-8">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white text-xl font-bold">
             T
           </div>
 
           <h1 className="mt-4 text-3xl font-bold text-slate-900">
-            Welcome back
+            Create your account
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Sign in to your TaskFlow account
+            Start managing your tasks with TaskFlow
           </p>
         </div>
 
         {/* Card */}
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <form onSubmit={handleLogin} className="space-y-5">
+
+          <form onSubmit={handleSignup} className="space-y-5">
+
+            {/* Name */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Full Name
+              </label>
+
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Umesh Chimane"
+                required
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+              />
+            </div>
+
             {/* Email */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -84,6 +115,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                minLength={6}
                 required
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
               />
@@ -102,21 +134,23 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-lg bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 
+          {/* Login Link */}
           <p className="mt-6 text-center text-sm text-slate-500">
-            Do not have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/signup"
+              href="/login"
               className="font-semibold text-slate-900 hover:underline"
             >
-              Create account
+              Sign in
             </Link>
           </p>
         </div>
 
+        {/* Footer */}
         <p className="mt-6 text-center text-xs text-slate-400">
           TaskFlow · Project Management
         </p>

@@ -17,6 +17,12 @@ export default function TaskForm() {
     const status = String(formData.get("status") || "todo");
     const priority = String(formData.get("priority") || "medium");
     const dueDate = String(formData.get("dueDate") || "");
+    const tagsInput = String(formData.get("tags") || "");
+
+    const tags = tagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
 
     const result = await createTask({
       title,
@@ -24,7 +30,7 @@ export default function TaskForm() {
       status,
       priority,
       dueDate: dueDate || null,
-      tags: [],
+      tags,
     });
 
     setLoading(false);
@@ -33,7 +39,6 @@ export default function TaskForm() {
       setMessage("Task created successfully!");
       setOpen(false);
 
-      // Refresh the Server Component
       window.location.reload();
     } else {
       setMessage(result.message || "Something went wrong");
@@ -149,6 +154,24 @@ export default function TaskForm() {
               type="date"
               className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none"
             />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Tags
+            </label>
+
+            <input
+              name="tags"
+              type="text"
+              placeholder="e.g. frontend, urgent, bug"
+              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-slate-500"
+            />
+
+            <p className="mt-1 text-xs text-slate-400">
+              Separate multiple tags with commas.
+            </p>
           </div>
 
           {/* Message */}

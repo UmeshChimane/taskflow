@@ -1,9 +1,10 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/mongodb";
+
 import TaskForm from "./TaskForm";
-import TaskActions from "./TaskActions";
-import Link from "next/link";
+import KanbanBoard from "./KanbanBoard";
+import TaskList from "./TaskList";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -41,6 +42,17 @@ export default async function DashboardPage() {
     (task) => task.status === "done",
   ).length;
 
+  const formattedTasks = tasks.map((task) => ({
+  id: task._id.toString(),
+  title: task.title,
+  description: task.description || "",
+  status: task.status,
+  priority: task.priority,
+  dueDate: task.dueDate || null,
+  assignee: task.assignee || null,
+  tags: task.tags || [],
+}));
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -77,7 +89,10 @@ export default async function DashboardPage() {
             <form
               action={async () => {
                 "use server";
-                await signOut({ redirectTo: "/login" });
+
+                await signOut({
+                  redirectTo: "/login",
+                });
               }}
             >
               <button
@@ -151,7 +166,7 @@ export default async function DashboardPage() {
             <TaskForm />
           </div>
 
-          {/* Task List */}
+          {/* Search, Filters and Task List */}
           {tasks.length === 0 ? (
             <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-16 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-xl">
@@ -167,69 +182,12 @@ export default async function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="mt-8 space-y-4">
-              {tasks.map((task) => (
-                <div
-                  key={task._id.toString()}
-                  className="rounded-xl border border-slate-200 p-5 transition hover:border-slate-300 hover:shadow-sm"
-                >
-                  {/* Task Header */}
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row">
-                    <div>
-                      <h4 className="font-semibold text-slate-900">
-                        {task.title}
-                      </h4>
-
-                      {task.description && (
-                        <p className="mt-2 text-sm text-slate-500">
-                          {task.description}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <StatusBadge status={task.status} />
-
-                      <PriorityBadge
-                        priority={task.priority}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Due Date */}
-                  {task.dueDate && (
-                    <p className="mt-4 text-xs text-slate-400">
-                      Due: {task.dueDate}
-                    </p>
-                  )}
-
-                  {/* Actions */}
-                  <div className="mt-5 flex flex-wrap items-center gap-2">
-                    {/* View Task */}
-                    <Link
-                      href={`/tasks/${task._id.toString()}`}
-                      className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-                    >
-                      View Task
-                    </Link>
-
-                    {/* Edit / Delete */}
-                    <TaskActions
-                      task={{
-                        id: task._id.toString(),
-                        title: task.title,
-                        description: task.description || "",
-                        status: task.status,
-                        priority: task.priority,
-                        dueDate: task.dueDate || null,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TaskList tasks={formattedTasks} />
           )}
         </div>
+
+        {/* Kanban Board */}
+        <KanbanBoard tasks={formattedTasks} />
       </main>
     </div>
   );
@@ -258,37 +216,5 @@ function StatCard({
         {description}
       </p>
     </div>
-  );
-}
-
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
-  const label =
-    status === "in-progress"
-      ? "In Progress"
-      : status === "done"
-        ? "Done"
-        : "To Do";
-
-  return (
-    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-      {label}
-    </span>
-  );
-}
-
-function PriorityBadge({
-  priority,
-}: {
-  priority: string;
-}) {
-  return (
-    <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
-      {priority.charAt(0).toUpperCase() +
-        priority.slice(1)}
-    </span>
   );
 }

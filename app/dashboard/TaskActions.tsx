@@ -10,6 +10,8 @@ type Task = {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   dueDate?: string | null;
+  assignee?: string | null;
+  tags?: string[];
 };
 
 export default function TaskActions({ task }: { task: Task }) {
@@ -19,13 +21,21 @@ export default function TaskActions({ task }: { task: Task }) {
   async function handleUpdate(formData: FormData) {
     setLoading(true);
 
+    const tagsInput = String(formData.get("tags") || "");
+
+    const tags = tagsInput
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
     const result = await updateTask(task.id, {
       title: String(formData.get("title") || ""),
       description: String(formData.get("description") || ""),
       status: String(formData.get("status") || "todo"),
       priority: String(formData.get("priority") || "medium"),
       dueDate: String(formData.get("dueDate") || "") || null,
-      tags: [],
+      assignee: task.assignee || null,
+      tags,
     });
 
     setLoading(false);
@@ -40,7 +50,7 @@ export default function TaskActions({ task }: { task: Task }) {
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this task?"
+      "Are you sure you want to delete this task?",
     );
 
     if (!confirmed) return;
@@ -58,12 +68,10 @@ export default function TaskActions({ task }: { task: Task }) {
     }
   }
 
-  /* EDIT MODE */
   if (editing) {
     return (
       <div className="mt-5 w-full basis-full rounded-xl border border-slate-200 bg-slate-50 p-5">
         <form action={handleUpdate} className="space-y-4">
-
           {/* Title */}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -94,7 +102,6 @@ export default function TaskActions({ task }: { task: Task }) {
 
           {/* Status + Priority */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
                 Status
@@ -126,7 +133,6 @@ export default function TaskActions({ task }: { task: Task }) {
                 <option value="high">High</option>
               </select>
             </div>
-
           </div>
 
           {/* Due Date */}
@@ -143,9 +149,27 @@ export default function TaskActions({ task }: { task: Task }) {
             />
           </div>
 
+          {/* Tags */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Tags
+            </label>
+
+            <input
+              name="tags"
+              type="text"
+              defaultValue={task.tags?.join(", ") || ""}
+              placeholder="e.g. frontend, urgent, bug"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-slate-900"
+            />
+
+            <p className="mt-1 text-xs text-slate-400">
+              Separate multiple tags with commas.
+            </p>
+          </div>
+
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
-
             <button
               type="button"
               onClick={() => setEditing(false)}
@@ -162,15 +186,12 @@ export default function TaskActions({ task }: { task: Task }) {
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>
-
           </div>
-
         </form>
       </div>
     );
   }
 
-  /* NORMAL MODE */
   return (
     <>
       <button

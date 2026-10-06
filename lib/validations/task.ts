@@ -4,35 +4,37 @@ export const taskSchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
-    .max(100, "Title must be less than 100 characters"),
+    .max(100, "Title is too long"),
 
   description: z
     .string()
-    .max(5000, "Description is too long")
+    .max(1000, "Description is too long")
     .optional()
     .default(""),
 
-  status: z
-    .enum(["todo", "in-progress", "done"])
-    .default("todo"),
+  status: z.enum([
+    "todo",
+    "in-progress",
+    "done",
+  ]),
 
-  priority: z
-    .enum(["low", "medium", "high"])
-    .default("medium"),
+  priority: z.enum([
+    "low",
+    "medium",
+    "high",
+  ]),
 
   dueDate: z
     .string()
-    .optional()
-    .nullable(),
+    .nullable()
+    .optional(),
 
   assignee: z
     .string()
-    .optional()
-    .nullable(),
+    .nullable()
+    .optional(),
 
   tags: z
     .array(z.string())
     .default([]),
 });
-
-export type TaskInput = z.infer<typeof taskSchema>;

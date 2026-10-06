@@ -172,3 +172,123 @@ export async function deleteTask(taskId: string) {
     };
   }
 }
+
+export async function createComment(
+  taskId: string,
+  content: string,
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.email) {
+      return {
+        success: false,
+        message: "You must be logged in",
+      };
+    }
+
+    if (!ObjectId.isValid(taskId)) {
+      return {
+        success: false,
+        message: "Invalid task ID",
+      };
+    }
+
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent) {
+      return {
+        success: false,
+        message: "Comment cannot be empty",
+      };
+    }
+
+    if (trimmedContent.length > 1000) {
+      return {
+        success: false,
+        message: "Comment is too long",
+      };
+    }
+
+    const db = await getDb();
+
+    const task = await db.collection("tasks").findOne({
+      _id: new ObjectId(taskId),
+      createdBy: session.user.email,
+    });
+
+    if (!task) {
+      return {
+        success: false,
+        message: "Task not found",
+      };
+    }
+
+    await db.collection("comments").insertOne({
+      taskId: new ObjectId(taskId),
+      content: trimmedContent,
+      createdBy: session.user.email,
+      createdAt: new Date(),
+    });
+
+    revalidatePath(`/tasks/${taskId}`);
+
+    return {
+      success: true,
+      message: "Comment added successfully",
+    };
+  } catch (error) {
+    console.error("Create comment error:", error);
+
+    return {
+      success: false,
+      message: "Failed to add comment",
+    };
+  }
+}
+
+export async function deleteComment(commentId: string) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.email) {
+      return {
+        success: false,
+        message: "You must be logged in",
+      };
+    }
+
+    if (!ObjectId.isValid(commentId)) {
+      return {
+        success: false,
+        message: "Invalid comment ID",
+      };
+    }
+
+    const db = await getDb();
+
+    const result = await db.collection("comments").deleteOne({
+      _id: new ObjectId(commentId),
+      createdBy: session.user.email,
+    });
+
+    if (result.deletedCount === 0) {
+      return {
+        success: false,
+        message: "Comment not found",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Comment deleted successfully",
+    };
+  } catch (error) {
+    console.error("Delete comment error:", error);
+
+    return {
+      success: false,
+      message: "Failed to delete comment",
+    };
+  }
+}

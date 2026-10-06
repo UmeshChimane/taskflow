@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
+import Comments from "./Comments";
 
 type Props = {
   params: Promise<{
@@ -36,6 +37,25 @@ export default async function TaskDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Fetch comments for this task
+  const comments = await db
+    .collection("comments")
+    .find({
+      taskId: new ObjectId(id),
+    })
+    .sort({
+      createdAt: -1,
+    })
+    .toArray();
+
+  // Convert MongoDB data into serializable props
+  const formattedComments = comments.map((comment) => ({
+    id: comment._id.toString(),
+    content: comment.content,
+    createdBy: comment.createdBy,
+    createdAt: new Date(comment.createdAt).toISOString(),
+  }));
+
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-4xl px-6 py-10">
@@ -48,7 +68,7 @@ export default async function TaskDetailPage({ params }: Props) {
           ← Back to Dashboard
         </Link>
 
-        {/* Card */}
+        {/* Task Card */}
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
 
           {/* Header */}
@@ -109,6 +129,26 @@ export default async function TaskDetailPage({ params }: Props) {
 
           </div>
 
+          {/* Tags */}
+          {task.tags && task.tags.length > 0 && (
+            <section className="mt-6">
+              <h2 className="text-sm font-semibold text-slate-700">
+                Tags
+              </h2>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {task.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Description */}
           <section className="mt-8">
             <h2 className="text-lg font-bold text-slate-900">
@@ -139,8 +179,17 @@ export default async function TaskDetailPage({ params }: Props) {
               {new Date(task.createdAt).toLocaleDateString()}
             </p>
           </div>
-
         </div>
+
+        {/* Comments */}
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <Comments
+            taskId={task._id.toString()}
+            comments={formattedComments}
+            currentUser={session.user.email}
+          />
+        </div>
+
       </div>
     </main>
   );

@@ -44,3 +44,21 @@ export async function createUser(
     email: email.toLowerCase(),
   };
 }
+
+export async function getAllUsers() {
+  const db = await getDb();
+
+  return db
+    .collection<User>("users")
+    .find(
+      {},
+      {
+        projection: {
+          name: 1,
+          email: 1,
+        },
+      },
+    )
+    .sort({ name: 1 })
+    .toArray();
+}

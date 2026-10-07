@@ -29,10 +29,10 @@ export const taskSchema = z.object({
     .nullable()
     .optional(),
 
-  assignee: z
-    .string()
-    .nullable()
-    .optional(),
+  // Multiple users can be assigned
+  assignees: z
+    .array(z.string())
+    .default([]),
 
   tags: z
     .array(z.string())

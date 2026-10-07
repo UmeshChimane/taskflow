@@ -10,7 +10,7 @@ type Task = {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   dueDate?: string | null;
-  assignee?: string | null;
+  assignees?: string[];
   tags?: string[];
 };
 
@@ -54,7 +54,7 @@ export default function KanbanBoard({ tasks }: Props) {
       status: newStatus,
       priority: task.priority,
       dueDate: task.dueDate || null,
-      assignee: task.assignee || null,
+      assignees: task.assignees || [],
       tags: task.tags || [],
     });
 
@@ -68,7 +68,10 @@ export default function KanbanBoard({ tasks }: Props) {
     setTaskList((current) =>
       current.map((item) =>
         item.id === task.id
-          ? { ...item, status: newStatus }
+          ? {
+              ...item,
+              status: newStatus,
+            }
           : item,
       ),
     );
@@ -76,6 +79,7 @@ export default function KanbanBoard({ tasks }: Props) {
 
   return (
     <div className="mt-8">
+      {/* Header */}
       <div className="mb-5">
         <h3 className="text-xl font-bold text-slate-900">
           Kanban Board
@@ -86,6 +90,7 @@ export default function KanbanBoard({ tasks }: Props) {
         </p>
       </div>
 
+      {/* Columns */}
       <div className="grid gap-5 lg:grid-cols-3">
         {columns.map((column) => {
           const columnTasks = taskList.filter(
@@ -128,44 +133,62 @@ export default function KanbanBoard({ tasks }: Props) {
                       key={task.id}
                       className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                     >
+                      {/* Title */}
                       <h5 className="font-semibold text-slate-900">
                         {task.title}
                       </h5>
 
+                      {/* Description */}
                       {task.description && (
                         <p className="mt-2 line-clamp-2 text-sm text-slate-500">
                           {task.description}
                         </p>
                       )}
 
-                      {/* Assignee */}
-                      {task.assignee && (
-                        <p className="mt-3 text-xs text-slate-500">
-                          Assignee:{" "}
-                          <span className="font-medium text-slate-700">
-                            {task.assignee}
-                          </span>
-                        </p>
-                      )}
+                      {/* Assignees */}
+                      {task.assignees &&
+                        task.assignees.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs font-medium text-slate-500">
+                              Assigned to:
+                            </p>
+
+                            <div className="mt-1 flex flex-wrap gap-1.5">
+                              {task.assignees.map(
+                                (email) => (
+                                  <span
+                                    key={email}
+                                    className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                                  >
+                                    {email}
+                                  </span>
+                                ),
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                       {/* Tags */}
-                      {task.tags && task.tags.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          {task.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
-                            >
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {task.tags &&
+                        task.tags.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {task.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                       {/* Priority + Due Date */}
                       <div className="mt-3 flex items-center justify-between">
                         <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600">
-                          {task.priority.charAt(0).toUpperCase() +
+                          {task.priority
+                            .charAt(0)
+                            .toUpperCase() +
                             task.priority.slice(1)}
                         </span>
 
@@ -184,7 +207,9 @@ export default function KanbanBoard({ tasks }: Props) {
 
                         <select
                           value={task.status}
-                          disabled={loadingId === task.id}
+                          disabled={
+                            loadingId === task.id
+                          }
                           onChange={(e) =>
                             changeStatus(
                               task,
@@ -207,6 +232,7 @@ export default function KanbanBoard({ tasks }: Props) {
                         </select>
                       </div>
 
+                      {/* Loading */}
                       {loadingId === task.id && (
                         <p className="mt-2 text-xs text-slate-400">
                           Updating...

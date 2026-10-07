@@ -1,23 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { createTask } from "@/app/actions/task";
+import {
+  createTask,
+  getUsersForAssignment,
+} from "@/app/actions/task";
+
+type User = {
+  name: string;
+  email: string;
+};
 
 export default function TaskForm() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  async function loadUsers() {
+    setUsersLoading(true);
+    setMessage("");
+
+    const result = await getUsersForAssignment();
+
+    setUsersLoading(false);
+
+    if (result.success) {
+      setUsers(result.users);
+    } else {
+      setMessage(result.message || "Failed to load users");
+    }
+  }
+
   async function handleSubmit(formData: FormData) {
     setLoading(true);
     setMessage("");
 
     const title = String(formData.get("title") || "");
-    const description = String(formData.get("description") || "");
-    const status = String(formData.get("status") || "todo");
-    const priority = String(formData.get("priority") || "medium");
-    const dueDate = String(formData.get("dueDate") || "");
-    const tagsInput = String(formData.get("tags") || "");
+    const description = String(
+      formData.get("description") || "",
+    );
+
+    const status = String(
+      formData.get("status") || "todo",
+    );
+
+    const priority = String(
+      formData.get("priority") || "medium",
+    );
+
+    const dueDate = String(
+      formData.get("dueDate") || "",
+    );
+
+    // Get multiple selected users
+    const assignees = formData.getAll("assignees");
+
+    const tagsInput = String(
+      formData.get("tags") || "",
+    );
 
     const tags = tagsInput
       .split(",")
@@ -30,6 +73,7 @@ export default function TaskForm() {
       status,
       priority,
       dueDate: dueDate || null,
+      assignees: assignees.map(String),
       tags,
     });
 
@@ -41,14 +85,19 @@ export default function TaskForm() {
 
       window.location.reload();
     } else {
-      setMessage(result.message || "Something went wrong");
+      setMessage(
+        result.message || "Something went wrong",
+      );
     }
   }
 
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          loadUsers();
+        }}
         className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
       >
         + Create Task
@@ -59,6 +108,8 @@ export default function TaskForm() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+
+        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-slate-900">
@@ -71,6 +122,7 @@ export default function TaskForm() {
           </div>
 
           <button
+            type="button"
             onClick={() => setOpen(false)}
             className="text-xl text-slate-400 hover:text-slate-700"
           >
@@ -78,7 +130,11 @@ export default function TaskForm() {
           </button>
         </div>
 
-        <form action={handleSubmit} className="space-y-5">
+        <form
+          action={handleSubmit}
+          className="space-y-5"
+        >
+
           {/* Title */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -110,6 +166,7 @@ export default function TaskForm() {
 
           {/* Status + Priority */}
           <div className="grid grid-cols-2 gap-4">
+
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Status
@@ -120,9 +177,17 @@ export default function TaskForm() {
                 defaultValue="todo"
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none"
               >
-                <option value="todo">To Do</option>
-                <option value="in-progress">In Progress</option>
-                <option value="done">Done</option>
+                <option value="todo">
+                  To Do
+                </option>
+
+                <option value="in-progress">
+                  In Progress
+                </option>
+
+                <option value="done">
+                  Done
+                </option>
               </select>
             </div>
 
@@ -136,11 +201,20 @@ export default function TaskForm() {
                 defaultValue="medium"
                 className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <option value="low">
+                  Low
+                </option>
+
+                <option value="medium">
+                  Medium
+                </option>
+
+                <option value="high">
+                  High
+                </option>
               </select>
             </div>
+
           </div>
 
           {/* Due Date */}
@@ -154,6 +228,39 @@ export default function TaskForm() {
               type="date"
               className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none"
             />
+          </div>
+
+          {/* Assignees */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Assignees
+            </label>
+
+            <select
+              name="assignees"
+              multiple
+              disabled={usersLoading}
+              className="h-32 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-500 disabled:bg-slate-100"
+            >
+              {usersLoading ? (
+                <option>
+                  Loading users...
+                </option>
+              ) : (
+                users.map((user) => (
+                  <option
+                    key={user.email}
+                    value={user.email}
+                  >
+                    {user.name} ({user.email})
+                  </option>
+                ))
+              )}
+            </select>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Hold Ctrl/Cmd to select multiple users.
+            </p>
           </div>
 
           {/* Tags */}
@@ -183,6 +290,7 @@ export default function TaskForm() {
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
+
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -193,12 +301,18 @@ export default function TaskForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading || usersLoading
+              }
               className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
             >
-              {loading ? "Creating..." : "Create Task"}
+              {loading
+                ? "Creating..."
+                : "Create Task"}
             </button>
+
           </div>
+
         </form>
       </div>
     </div>

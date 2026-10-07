@@ -11,11 +11,15 @@ type Task = {
   status: "todo" | "in-progress" | "done";
   priority: "low" | "medium" | "high";
   dueDate?: string | null;
-  assignee?: string | null;
+  assignees?: string[];
   tags?: string[];
 };
 
-export default function TaskList({ tasks }: { tasks: Task[] }) {
+export default function TaskList({
+  tasks,
+}: {
+  tasks: Task[];
+}) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [priority, setPriority] = useState("all");
@@ -44,10 +48,12 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
         status === "all" || task.status === status;
 
       const matchesPriority =
-        priority === "all" || task.priority === priority;
+        priority === "all" ||
+        task.priority === priority;
 
       const matchesTag =
-        tag === "all" || (task.tags || []).includes(tag);
+        tag === "all" ||
+        (task.tags || []).includes(tag);
 
       return (
         matchesSearch &&
@@ -58,14 +64,22 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
     });
 
     return [...result].sort((a, b) => {
+      // Newest first
+      if (sort === "newest") {
+        return 0;
+      }
+
+      // Title A → Z
       if (sort === "title-asc") {
         return a.title.localeCompare(b.title);
       }
 
+      // Title Z → A
       if (sort === "title-desc") {
         return b.title.localeCompare(a.title);
       }
 
+      // High → Medium → Low
       if (sort === "priority") {
         const priorityOrder = {
           high: 3,
@@ -76,6 +90,18 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
         return (
           priorityOrder[b.priority] -
           priorityOrder[a.priority]
+        );
+      }
+
+      // Due date: earliest first
+      if (sort === "due-date") {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+
+        return (
+          new Date(a.dueDate).getTime() -
+          new Date(b.dueDate).getTime()
         );
       }
 
@@ -94,6 +120,7 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
     <div>
       {/* Filters */}
       <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
         <div className="mb-4">
           <h4 className="font-semibold text-slate-900">
             Filter & Search
@@ -105,49 +132,85 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
         </div>
 
         <div className="grid gap-3 md:grid-cols-5">
+
           {/* Search */}
           <input
             type="text"
             placeholder="Search by title..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-slate-900"
           />
 
           {/* Status */}
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) =>
+              setStatus(e.target.value)
+            }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900"
           >
-            <option value="all">All Statuses</option>
-            <option value="todo">To Do</option>
-            <option value="in-progress">In Progress</option>
-            <option value="done">Done</option>
+            <option value="all">
+              All Statuses
+            </option>
+
+            <option value="todo">
+              To Do
+            </option>
+
+            <option value="in-progress">
+              In Progress
+            </option>
+
+            <option value="done">
+              Done
+            </option>
           </select>
 
           {/* Priority */}
           <select
             value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+            onChange={(e) =>
+              setPriority(e.target.value)
+            }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900"
           >
-            <option value="all">All Priorities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="all">
+              All Priorities
+            </option>
+
+            <option value="high">
+              High
+            </option>
+
+            <option value="medium">
+              Medium
+            </option>
+
+            <option value="low">
+              Low
+            </option>
           </select>
 
           {/* Tags */}
           <select
             value={tag}
-            onChange={(e) => setTag(e.target.value)}
+            onChange={(e) =>
+              setTag(e.target.value)
+            }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900"
           >
-            <option value="all">All Tags</option>
+            <option value="all">
+              All Tags
+            </option>
 
             {availableTags.map((taskTag) => (
-              <option key={taskTag} value={taskTag}>
+              <option
+                key={taskTag}
+                value={taskTag}
+              >
                 {taskTag}
               </option>
             ))}
@@ -156,25 +219,46 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
           {/* Sorting */}
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) =>
+              setSort(e.target.value)
+            }
             className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-slate-900"
           >
-            <option value="newest">Newest First</option>
-            <option value="title-asc">Title A → Z</option>
-            <option value="title-desc">Title Z → A</option>
-            <option value="priority">Priority</option>
+            <option value="newest">
+              Newest First
+            </option>
+
+            <option value="title-asc">
+              Title A → Z
+            </option>
+
+            <option value="title-desc">
+              Title Z → A
+            </option>
+
+            <option value="priority">
+              Priority: High → Low
+            </option>
+
+            <option value="due-date">
+              Due Date: Earliest
+            </option>
           </select>
+
         </div>
 
         {/* Result count */}
         <p className="mt-3 text-xs text-slate-500">
-          Showing {filteredTasks.length} of {tasks.length} tasks
+          Showing {filteredTasks.length} of{" "}
+          {tasks.length} tasks
         </p>
       </div>
 
       {/* Task List */}
       {filteredTasks.length === 0 ? (
+
         <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 py-12 text-center">
+
           <h4 className="font-semibold text-slate-900">
             No matching tasks
           </h4>
@@ -182,16 +266,23 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
           <p className="mt-1 text-sm text-slate-500">
             Try changing your search or filters.
           </p>
+
         </div>
+
       ) : (
+
         <div className="mt-6 space-y-4">
+
           {filteredTasks.map((task) => (
+
             <div
               key={task.id}
               className="rounded-xl border border-slate-200 p-5 transition hover:border-slate-300 hover:shadow-sm"
             >
+
               {/* Header */}
               <div className="flex flex-col justify-between gap-4 sm:flex-row">
+
                 <div>
                   <h4 className="font-semibold text-slate-900">
                     {task.title}
@@ -205,25 +296,33 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
                 </div>
 
                 <div className="flex gap-2">
-                  <StatusBadge status={task.status} />
+                  <StatusBadge
+                    status={task.status}
+                  />
 
-                  <PriorityBadge priority={task.priority} />
+                  <PriorityBadge
+                    priority={task.priority}
+                  />
                 </div>
+
               </div>
 
               {/* Tags */}
-              {task.tags && task.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {task.tags.map((taskTag) => (
-                    <span
-                      key={taskTag}
-                      className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
-                    >
-                      #{taskTag}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {task.tags &&
+                task.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+
+                    {task.tags.map((taskTag) => (
+                      <span
+                        key={taskTag}
+                        className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                      >
+                        #{taskTag}
+                      </span>
+                    ))}
+
+                  </div>
+                )}
 
               {/* Due Date */}
               {task.dueDate && (
@@ -232,11 +331,35 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
                 </p>
               )}
 
+              {/* Assignees */}
+              {task.assignees &&
+                task.assignees.length > 0 && (
+                  <div className="mt-3">
 
+                    <p className="text-xs font-medium text-slate-500">
+                      Assigned to:
+                    </p>
 
+                    <div className="mt-1 flex flex-wrap gap-2">
+
+                      {task.assignees.map(
+                        (email) => (
+                          <span
+                            key={email}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
+                          >
+                            {email}
+                          </span>
+                        ),
+                      )}
+
+                    </div>
+                  </div>
+                )}
 
               {/* Actions */}
               <div className="mt-5 flex flex-wrap items-center gap-2">
+
                 <Link
                   href={`/tasks/${task.id}`}
                   className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
@@ -245,16 +368,25 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
                 </Link>
 
                 <TaskActions task={task} />
+
               </div>
+
             </div>
+
           ))}
+
         </div>
+
       )}
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({
+  status,
+}: {
+  status: string;
+}) {
   const label =
     status === "in-progress"
       ? "In Progress"
@@ -269,10 +401,15 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function PriorityBadge({ priority }: { priority: string }) {
+function PriorityBadge({
+  priority,
+}: {
+  priority: string;
+}) {
   return (
     <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
-      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+      {priority.charAt(0).toUpperCase() +
+        priority.slice(1)}
     </span>
   );
 }

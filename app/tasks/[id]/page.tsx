@@ -29,9 +29,12 @@ export default async function TaskDetailPage({ params }: Props) {
   const db = await getDb();
 
   const task = await db.collection("tasks").findOne({
-    _id: new ObjectId(id),
-    createdBy: session.user.email,
-  });
+  _id: new ObjectId(id),
+  $or: [
+    { createdBy: session.user.email },
+    { assignees: session.user.email },
+  ],
+});
 
   if (!task) {
     notFound();

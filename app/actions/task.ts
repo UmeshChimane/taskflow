@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
 import { taskSchema } from "@/lib/validations/task";
+import { getAllUsers } from "@/lib/user";
 
 export async function createTask(input: unknown) {
   try {
@@ -212,15 +213,23 @@ export async function createComment(
 
     const db = await getDb();
 
+    // Task creator OR any assigned user can comment
     const task = await db.collection("tasks").findOne({
       _id: new ObjectId(taskId),
-      createdBy: session.user.email,
+      $or: [
+        {
+          createdBy: session.user.email,
+        },
+        {
+          assignees: session.user.email,
+        },
+      ],
     });
 
     if (!task) {
       return {
         success: false,
-        message: "Task not found",
+        message: "You are not allowed to comment on this task",
       };
     }
 
@@ -289,6 +298,58 @@ export async function deleteComment(commentId: string) {
     return {
       success: false,
       message: "Failed to delete comment",
+    };
+  }
+}
+
+export async function getUsersForAssignment() {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.email) {
+      return {
+        success: false,
+        message: "You must be logged in",
+        users: [],
+      };
+    }
+
+    const db = await getDb();
+
+    const users = await db
+      .collection("users")
+      .find(
+        {},
+        {
+          projection: {
+            _id: 0,
+            name: 1,
+            email: 1,
+          },
+        },
+      )
+      .sort({ name: 1 })
+      .toArray();
+
+    const formattedUsers = users.map((user) => ({
+      name: String(user.name),
+      email: String(user.email),
+    }));
+
+    return {
+      success: true,
+      users: formattedUsers,
+    };
+  } catch (error) {
+    console.error(
+      "Get users for assignment error:",
+      error,
+    );
+
+    return {
+      success: false,
+      message: "Failed to load users",
+      users: [],
     };
   }
 }

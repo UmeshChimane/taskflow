@@ -1,0 +1,3 @@
+import { auth } from "@/auth";import { redirect } from "next/navigation";import AppShell from "@/components/AppShell";import NotificationList from "@/components/notifications/NotificationList";
+export const dynamic="force-dynamic";
+export default async function NotificationsPage(){const s=await auth();if(!s?.user?.email)redirect("/login");return <AppShell user={s.user}><div className="page-header"><div><p className="page-kicker">Inbox</p><h1 className="page-title">Notifications</h1><p className="page-description">Stay on top of assignments, workspace invites and changes.</p></div></div><NotificationList/></AppShell>}

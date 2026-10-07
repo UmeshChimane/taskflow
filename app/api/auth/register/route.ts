@@ -1,40 +1,28 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createUser } from "@/lib/user";
+import { registrationSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const parsed = registrationSchema.safeParse(body);
 
-    const { name, email, password } = body;
-
-    if (!name || !email || !password) {
+    if (!parsed.success) {
       return NextResponse.json(
         {
           success: false,
-          message: "Name, email and password are required",
+          message: "Invalid registration data",
+          errors: parsed.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Password must be at least 6 characters",
-        },
-        { status: 400 }
-      );
-    }
-
+    const { name, email, password } = parsed.data;
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await createUser(
-      name,
-      email,
-      hashedPassword
-    );
+    const user = await createUser(name, email, hashedPassword);
 
     return NextResponse.json(
       {
@@ -42,22 +30,27 @@ export async function POST(request: Request) {
         message: "User registered successfully",
         user,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    if (error instanceof Error && error.message === "USER_ALREADY_EXISTS") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "An account with this email already exists",
+        },
+        { status: 409 },
+      );
+    }
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Registration failed";
+    console.error("Registration error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message,
+        message: "Registration failed",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

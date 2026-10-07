@@ -1,40 +1,4 @@
 import { z } from "zod";
-
-export const taskSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(100, "Title is too long"),
-
-  description: z
-    .string()
-    .max(1000, "Description is too long")
-    .optional()
-    .default(""),
-
-  status: z.enum([
-    "todo",
-    "in-progress",
-    "done",
-  ]),
-
-  priority: z.enum([
-    "low",
-    "medium",
-    "high",
-  ]),
-
-  dueDate: z
-    .string()
-    .nullable()
-    .optional(),
-
-  assignee: z
-    .string()
-    .nullable()
-    .optional(),
-
-  tags: z
-    .array(z.string())
-    .default([]),
-});
+const datePattern=/^\d{4}-\d{2}-\d{2}$/;
+function validDate(v:string){if(!datePattern.test(v))return false;const [y,m,d]=v.split("-").map(Number);const dt=new Date(Date.UTC(y,m-1,d));return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d;}
+export const taskSchema=z.object({title:z.string().trim().min(1,"Title is required").max(100,"Title is too long"),description:z.string().trim().max(2000,"Description is too long").default(""),status:z.enum(["todo","in-progress","done"]),priority:z.enum(["low","medium","high"]),dueDate:z.union([z.string().refine(validDate,"Enter a valid due date"),z.literal(""),z.null()]).optional().default(null),assignees:z.array(z.string().trim().email("Select valid assignees")).max(20,"Too many assignees").default([]),tags:z.array(z.string().trim().min(1).max(30)).max(20,"Too many tags").default([])});

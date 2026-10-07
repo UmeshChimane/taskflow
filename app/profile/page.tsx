@@ -1,0 +1,3 @@
+import { auth } from "@/auth";import { redirect } from "next/navigation";import AppShell from "@/components/AppShell";import { getProfile } from "@/app/actions/profile";import ProfileEditor from "@/components/profile/ProfileEditor";
+export const dynamic="force-dynamic";
+export default async function ProfilePage(){const s=await auth();if(!s?.user?.email)redirect("/login");const r=await getProfile();if(!r.success)redirect("/login");return <AppShell user={s.user}><div className="page-header"><div><p className="page-kicker">Account</p><h1 className="page-title">Profile</h1><p className="page-description">View and manage the personal details shown across TaskFlow.</p></div></div><ProfileEditor profile={r.profile}/></AppShell>}

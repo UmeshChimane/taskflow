@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskFlow
 
-## Getting Started
+A responsive team project-management application built with Next.js, Auth.js, MongoDB and TypeScript.
 
-First, run the development server:
+## Features
+
+- Credentials authentication with hashed passwords
+- Light / dark theme with persistent preference
+- Dashboard overview
+- Workspaces with owners and members
+- Create a workspace and invite members
+- Join a workspace using a 6-character code
+- Workspace-scoped task creation
+- Assignee dropdown limited to workspace members
+- Assignment notifications
+- My Tasks view across workspaces
+- Task filtering and sorting
+- Kanban drag-and-drop
+- Status flow: To Do ↔ In Progress ↔ Completed, one stage at a time
+- Task and workspace edit/delete permissions
+- Confirmation dialogs for destructive actions
+- Profile view and editing
+- Comments
+- Server-side validation with Zod
+- Responsive desktop/tablet/mobile UI
+
+## Setup
+
+```bash
+npm install
+```
+
+Copy `.env.example` to `.env.local` and add your MongoDB Atlas URI and Auth.js secret.
+
+```bash
+cp .env.example .env.local
+```
+
+Then run:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## Workspace model
 
-To learn more about Next.js, take a look at the following resources:
+A workspace has one owner and one or more members. Tasks belong to exactly one workspace. Only workspace members can access its tasks. Owners can manage workspace membership and delete/edit the workspace. Task creators own their tasks; assignees can view and comment. The task status can only move one stage at a time.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Never commit `.env.local` or real MongoDB credentials. Use `.env.example` as the template.

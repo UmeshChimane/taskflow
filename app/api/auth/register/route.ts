@@ -4,15 +4,20 @@ import { createUser } from "@/lib/user";
 import { registrationSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
+  let body: unknown;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, message: "Enter valid registration data" }, { status: 400 });
+  }
+  try {
     const parsed = registrationSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid registration data",
+          message: parsed.error.issues[0]?.message || "Invalid registration data",
           errors: parsed.error.flatten().fieldErrors,
         },
         { status: 400 },
@@ -43,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Registration error:", error);
+    console.error("Registration failed");
 
     return NextResponse.json(
       {

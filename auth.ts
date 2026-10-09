@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { getUserByEmail } from "@/lib/user";
+import { getSessionUser, getUserByEmail } from "@/lib/user";
+import { loginSchema } from "@/lib/validations/auth";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -18,12 +19,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) {
           return null;
         }
 
-        const email = String(credentials.email);
-        const password = String(credentials.password);
+        const { email, password } = parsed.data;
 
         const user = await getUserByEmail(email);
 
@@ -55,5 +56,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   session: {
     strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token }) {
+      // Ignore client session updates: identity comes from the verified JWT and DB.
+      if (typeof token.sub !== "string" || typeof token.email !== "string") return null;
+      const user = await getSessionUser(token.sub, token.email);
+      if (!user) return null;
+      return { ...token, name: user.name, email: user.email, picture: user.avatarUpdatedAt ? `/api/avatar/${user._id}?v=${new Date(user.avatarUpdatedAt).getTime()}` : undefined };
+    },
   },
 });

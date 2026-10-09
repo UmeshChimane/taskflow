@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="78b17a96-46f5-485f-b8c3-ff38f1ed742b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/task.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/task.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/actions/workspace.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/actions/workspace.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/auth/register/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/auth/register/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/dashboard/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/dashboard/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/my-tasks/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/my-tasks/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/signup/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/signup/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/tasks/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/tasks/[id]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/workspaces/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/workspaces/[id]/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/auth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/AppShell.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/AppShell.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tasks/KanbanBoard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/tasks/KanbanBoard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tasks/TaskActions.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/tasks/TaskActions.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tasks/TaskForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/tasks/TaskForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/tasks/TaskList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/tasks/TaskList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/workspace/WorkspaceDetail.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/workspace/WorkspaceDetail.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/mongodb.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/mongodb.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/user.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/validations/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/validations/auth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/validations/task.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/validations/task.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/home/umesh.chimane/Downloads/Training Project/taskflow" value="3KS6kU8S4bW1tLhoCOtGkGLKnDY" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="3KS6iNT6hUn4feyQgKFzy2imfmu" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_id" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
+      </template>
+    </option>
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "copilot.chat.legacySessionMetadata.migrated": "true",
+    "git-widget-placeholder": "auth-fix",
+    "js.debugger.nextJs.config.created.client": "true",
+    "js.debugger.nextJs.config.created.server": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm"
+  }
+}]]></component>
+  <component name="RunManager" selected="npm.Next.js: server-side">
+    <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
+      <method v="2" />
+    </configuration>
+    <configuration name="Next.js: server-side" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="dev" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="78b17a96-46f5-485f-b8c3-ff38f1ed742b" name="Changes" comment="" />
+      <created>1791538772680</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791538772680</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

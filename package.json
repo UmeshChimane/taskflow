@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:auth": "node tests/auth.test.mjs",
+    "test:tasks": "node tests/task-views.test.mjs",
+    "test:notifications": "node tests/overdue-notifications.test.mjs",
+    "test:profile": "node tests/profile.test.mjs",
+    "test:crud": "node tests/crud-permissions.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -16,6 +21,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "^10.1.0",
+    "sharp": "^0.35.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {

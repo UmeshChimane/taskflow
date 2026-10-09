@@ -1,7 +1,8 @@
 import { getDb } from "./mongodb";
+import { ObjectId } from "mongodb";
 
 export interface User {
-  _id?: string;
+  _id?: ObjectId;
   name: string;
   email: string;
   password: string;
@@ -14,6 +15,15 @@ export async function getUserByEmail(email: string) {
   return db.collection<User>("users").findOne({
     email: email.trim().toLowerCase(),
   });
+}
+
+export async function getSessionUser(id: string, email: string) {
+  if (!ObjectId.isValid(id)) return null;
+  const db = await getDb();
+  return db.collection<Pick<User, "name" | "email"> & { avatarUpdatedAt?: Date }>("users").findOne(
+    { _id: new ObjectId(id), email },
+    { projection: { name: 1, email: 1, avatarUpdatedAt: 1 } },
+  );
 }
 
 export async function createUser(

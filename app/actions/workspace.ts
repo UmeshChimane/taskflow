@@ -3,7 +3,9 @@ import { ObjectId, type Collection, type Db, type WithId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/mongodb";
-import { workspaceSchema } from "@/lib/validations/workspace";
+import { randomInt } from "node:crypto";
+import { workspaceSchema,memberEmailSchema,joinCodeSchema } from "@/lib/validations/workspace";
+import { serializeTask } from "@/lib/task-views";
 import { getAllUsers } from "@/lib/user";
 
 type WorkspaceMember = { email: string; role: "owner" | "member"; joinedAt: Date };
@@ -24,6 +26,7 @@ type TaskData = {
   status?: string;
   priority?: string;
   dueDate?: string | null;
+  startDate?: string | null;
   assignees?: string[];
   assignee?: string;
   tags?: string[];
@@ -39,14 +42,14 @@ type NotificationDocument = {
   read: boolean;
   createdAt: Date;
 };
-type UserDocument = { email: string; name?: string; jobTitle?: string };
+type UserDocument = { email: string; name?: string; jobTitle?: string; avatarUpdatedAt?: Date };
 
 type ActionFailure = { success: false; message: string };
 type WorkspaceCreateResult = ActionFailure | { success: true; id: string; joinCode: string; message: string };
 type WorkspaceJoinResult = ActionFailure | { success: true; id: string; message: string };
 
 function code() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+  return randomInt(36**6).toString(36).padStart(6,"0").toUpperCase();
 }
 
 async function notify(
@@ -150,8 +153,9 @@ export async function joinWorkspace(joinCode: string): Promise<WorkspaceJoinResu
     const name = session?.user?.name || email || "A user";
     if (!email) return { success: false, message: "You must be logged in" };
 
-    const codeValue = joinCode.trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(codeValue)) return { success: false, message: "Enter a valid 6-character workspace code" };
+    const parsed=joinCodeSchema.safeParse(joinCode);
+    if(!parsed.success)return{success:false,message:parsed.error.issues[0].message};
+    const codeValue=parsed.data;
 
     const db = await getDb();
     const workspaces = workspacesCollection(db);
@@ -162,11 +166,12 @@ export async function joinWorkspace(joinCode: string): Promise<WorkspaceJoinResu
       return { success: false, message: "You are already a member of this workspace" };
     }
 
-    await workspaces.updateOne(
-      { _id: workspace._id },
+    const joined=await workspaces.updateOne(
+      { _id: workspace._id,"members.email":{$ne:email} },
       { $push: { members: { email, role: "member", joinedAt: new Date() } }, $set: { updatedAt: new Date() } },
     );
 
+    if(!joined.matchedCount)return{success:false,message:"You are already a member or the workspace no longer exists"};
     await notify(
       db,
       workspace.ownerEmail,
@@ -198,12 +203,13 @@ export async function getWorkspace(workspaceId: string) {
       workspace.members.map(async (member) => {
         const user = await db.collection<UserDocument>("users").findOne(
           { email: member.email },
-          { projection: { name: 1, email: 1, jobTitle: 1 } },
+          { projection: { name: 1, email: 1, jobTitle: 1, avatarUpdatedAt: 1 } },
         );
         return {
           email: member.email,
           name: user?.name || member.email,
           jobTitle: user?.jobTitle || "",
+          image: user?.avatarUpdatedAt ? `/api/avatar/${user._id}?v=${new Date(user.avatarUpdatedAt).getTime()}` : null,
           role: member.role,
           joinedAt: member.joinedAt,
         };
@@ -221,19 +227,7 @@ export async function getWorkspace(workspaceId: string) {
         joinCode: workspace.joinCode,
         role: workspace.ownerEmail === email ? "owner" : "member",
         members,
-        tasks: tasks.map((task) => ({
-          id: task._id.toString(),
-          title: String(task.title || "Untitled"),
-          description: String(task.description || ""),
-          status: task.status || "todo",
-          priority: task.priority || "medium",
-          dueDate: task.dueDate || null,
-          assignees: Array.isArray(task.assignees) ? task.assignees : task.assignee ? [task.assignee] : [],
-          tags: Array.isArray(task.tags) ? task.tags : [],
-          createdBy: String(task.createdBy || ""),
-          createdAt: new Date(task.createdAt || 0).toISOString(),
-          isOwner: task.createdBy === email,
-        })),
+        tasks: tasks.map((task) => serializeTask(task, email, workspace.name)),
       },
     };
   } catch {
@@ -248,7 +242,9 @@ export async function addWorkspaceMember(workspaceId: string, email: string) {
     const ownerName = session?.user?.name || ownerEmail || "The workspace owner";
     if (!ownerEmail || !ObjectId.isValid(workspaceId)) return { success: false as const, message: "Invalid request" };
 
-    const normalized = email.trim().toLowerCase();
+    const parsed=memberEmailSchema.safeParse(email);
+    if(!parsed.success)return{success:false as const,message:parsed.error.issues[0].message};
+    const normalized=parsed.data;
     const db = await getDb();
     const workspaces = workspacesCollection(db);
     const workspace = await workspaces.findOne({ _id: new ObjectId(workspaceId), ownerEmail });
@@ -258,10 +254,11 @@ export async function addWorkspaceMember(workspaceId: string, email: string) {
     if (!user) return { success: false as const, message: "User not found. Ask them to create a TaskFlow account first." };
     if (memberEmails(workspace).includes(normalized)) return { success: false as const, message: "User is already a member" };
 
-    await workspaces.updateOne(
-      { _id: workspace._id },
+    const added=await workspaces.updateOne(
+      { _id: workspace._id,ownerEmail,"members.email":{$ne:normalized} },
       { $push: { members: { email: normalized, role: "member", joinedAt: new Date() } }, $set: { updatedAt: new Date() } },
     );
+    if(!added.matchedCount)return{success:false as const,message:"User is already a member or the workspace changed"};
     await notify(db, normalized, "You were added to a workspace", `${ownerName} added you to ${workspace.name}.`, `/workspaces/${workspace._id.toString()}`, "workspace");
 
     revalidatePath(`/workspaces/${workspaceId}`);
@@ -277,7 +274,9 @@ export async function removeWorkspaceMember(workspaceId: string, email: string) 
     const ownerEmail = session?.user?.email?.toLowerCase();
     if (!ownerEmail || !ObjectId.isValid(workspaceId)) return { success: false as const, message: "Invalid request" };
 
-    const normalized = email.trim().toLowerCase();
+    const parsed=memberEmailSchema.safeParse(email);
+    if(!parsed.success)return{success:false as const,message:parsed.error.issues[0].message};
+    const normalized=parsed.data;
     const db = await getDb();
     const workspaces = workspacesCollection(db);
     const workspace = await workspaces.findOne({ _id: new ObjectId(workspaceId), ownerEmail });
@@ -286,6 +285,9 @@ export async function removeWorkspaceMember(workspaceId: string, email: string) 
 
     await workspaces.updateOne({ _id: workspace._id }, { $pull: { members: { email: normalized } }, $set: { updatedAt: new Date() } });
     await tasksCollection(db).updateMany({ workspaceId: workspace._id }, { $pull: { assignees: normalized } });
+    await tasksCollection(db).updateMany({ workspaceId: workspace._id, assignee: normalized }, { $unset: { assignee: "" } });
+    revalidatePath("/tasks");
+    revalidatePath("/my-tasks");
 
     revalidatePath(`/workspaces/${workspaceId}`);
     return { success: true as const, message: "Member removed" };
@@ -336,6 +338,8 @@ export async function deleteWorkspace(workspaceId: string) {
       await tasksCollection(db).deleteMany({ _id: { $in: ids } });
     }
 
+    await db.collection("announcements").deleteMany({workspaceId:oid});
+    revalidatePath("/tasks");revalidatePath("/my-tasks");
     revalidatePath("/workspaces");
     revalidatePath("/dashboard");
     return { success: true as const, message: "Workspace deleted" };

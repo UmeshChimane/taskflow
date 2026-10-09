@@ -1,10 +1,22 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getDb } from "@/lib/mongodb";
-import AppShell from "@/components/AppShell";
 import Link from "next/link";
-import { Briefcase, CheckCircle, Clock, ArrowRight, Plus, Sparkles } from "@/components/icons";
-export const dynamic="force-dynamic";
-export default async function DashboardPage(){const s=await auth();if(!s?.user?.email)redirect("/login");const db=await getDb();const ws=await db.collection("workspaces").find({"members.email":s.user.email}).sort({updatedAt:-1}).toArray();const ids=ws.map(w=>w._id);const tasks=ids.length?await db.collection("tasks").find({workspaceId:{$in:ids}}).sort({createdAt:-1}).limit(200).toArray():[];const mine=tasks.filter(t=>t.createdBy===s.user!.email);const todo=tasks.filter(t=>(t.status||"todo")==="todo").length;const progress=tasks.filter(t=>t.status==="in-progress").length;const done=tasks.filter(t=>t.status==="done").length;const workspaceMap=new Map(ws.map(w=>[w._id.toString(),w.name]));return <AppShell user={s.user}><div className="page-header"><div><p className="page-kicker">Overview</p><h1 className="page-title">Good to see you, {s.user.name?.split(" ")[0]||"there"}.</h1><p className="page-description">A focused overview of the work happening across your workspaces.</p></div><Link href="/workspaces" className="button button-primary"><Plus size={16}/> Manage workspaces</Link></div><div className="stat-grid"><Stat icon={Briefcase} label="Workspaces" value={ws.length} note="Teams you belong to"/><Stat icon={CheckCircle} label="Total tasks" value={tasks.length} note="Across your workspaces"/><Stat icon={Clock} label="In progress" value={progress} note={`${todo} waiting to start`}/><Stat icon={Sparkles} label="Completed" value={done} note={`${mine.length} created by you`}/></div><div className="mt-5 grid gap-5 lg:grid-cols-[1.55fr_1fr]"><section className="card section-card"><div className="flex items-center justify-between gap-3"><div><h2 className="section-title">Recent work</h2><p className="section-subtitle">The latest tasks across your workspaces.</p></div><Link href="/my-tasks" className="button button-ghost">My tasks <ArrowRight size={15}/></Link></div><div className="mt-4 space-y-2">{tasks.slice(0,6).map(t=><Link href={`/tasks/${t._id}`} key={String(t._id)} className="task-card"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-bold">{t.title}</p><p className="mt-1 text-[11px] muted">{workspaceMap.get(t.workspaceId?.toString()||"")||"Workspace"} · {t.createdBy===s.user!.email?"Created by you":"Assigned to you/team"}</p></div><StatusBadge status={t.status||"todo"}/></div></Link>)}{tasks.length===0&&<div className="empty-state"><p className="font-semibold">No work yet</p><p className="mt-1 text-xs">Create a workspace and your first task to get started.</p><Link href="/workspaces" className="button button-primary mt-4">Create workspace</Link></div>}</div></section><section className="card section-card"><div><h2 className="section-title">Your workspaces</h2><p className="section-subtitle">Jump into a project.</p></div><div className="mt-4 space-y-2">{ws.slice(0,5).map(w=><Link href={`/workspaces/${w._id}`} key={String(w._id)} className="flex items-center gap-3 rounded-xl border border-[var(--border)] p-3 hover:bg-[var(--surface-2)]"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Briefcase size={17}/></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{w.name}</p><p className="text-[11px] muted">{Array.isArray(w.members)?w.members.length:0} members</p></div><ArrowRight size={15} className="muted"/></Link>)}{ws.length===0&&<div className="empty-state">You are not in a workspace yet.</div>}</div></section></div></AppShell>}
-function Stat({icon:Icon,label,value,note}:{icon:any;label:string;value:number;note:string}){return <div className="card stat-card"><div className="flex items-center justify-between"><span className="stat-label">{label}</span><Icon size={17} className="text-[var(--primary)]"/></div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></div>}
-function StatusBadge({status}:{status:string}){return <span className="tag">{status==="in-progress"?"In Progress":status==="done"?"Completed":"To Do"}</span>}
+import AppShell from "@/components/AppShell";
+import Dashboard from "@/components/dashboard/Dashboard";
+import { getDashboardData } from "@/lib/dashboard";
+import { Plus } from "@/components/icons";
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user?.email) redirect("/login");
+  const data = await getDashboardData(session.user.email);
+  return <AppShell user={session.user}>
+    <div className="page-header">
+      <div><p className="page-kicker">Overview</p><h1 className="page-title">Good to see you, {session.user.name?.split(" ")[0] || "there"}.</h1><p className="page-description">A focused overview of the work happening across your workspaces.</p></div>
+      <Link href="/workspaces" className="button button-primary"><Plus size={16}/>Manage workspaces</Link>
+    </div>
+    <Dashboard data={data} email={session.user.email}/>
+  </AppShell>;
+}
